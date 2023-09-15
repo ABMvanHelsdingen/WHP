@@ -36,8 +36,8 @@ plotZ <- ggplot() +
   geom_point(data=cues, aes(x=(1/3600)*cues,y=-100*depths),col="red") +
   ylab("Depth (m)") +
   xlab("Time (hr)") +
-  xlim(0.1,0.4)
-theme_classic() +
+  xlim(5.4,6.1) +
+  theme_classic() +
   theme(axis.title = element_text(size = 20))
 
 # FIGURE 4: IWP and Homogenous Poisson comparison
