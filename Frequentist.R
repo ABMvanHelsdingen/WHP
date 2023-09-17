@@ -3,7 +3,7 @@
 
 load("PhD-oversize/cleaned_whale_data.Rdata")
 wh <- 53
-dyn.load(TMB::dynlib("PhD/Templates/weibull_hawkes_cbf_F"))
+dyn.load(TMB::dynlib("whale_cues"))
 library(stelfi)
 
 
@@ -30,11 +30,11 @@ for(j in 1:length(depths)){
 
 # calculate slot number of each event
 slot_numbers <- floor(times * rincr)
-NLLmin <- 1e9
+NLLmin <- Inf
 for(j in 1:n_starts){
   out <- tryCatch(
   {
-    rbeta <- rexp(1,1) * 0.1
+    rbeta <- rexp(1,1)
     pars <- list(alpha = runif(1,0.01,0.99) * rbeta ,beta = rbeta, k = runif(1, 0.8, 5))
     background_pars <- c(runif(1,-12,-6), runif(1,-2,0), runif(1,-1,1), runif(1,-7,-0.5))
     cbfCoefs[j, 1:7] <- c(background_pars[1], background_pars[2], background_pars[3], background_pars[4],
@@ -45,7 +45,7 @@ for(j in 1:n_starts){
                                             logit_abratio = qlogis(pars[["alpha"]]/pars[["beta"]]),
                                             log_beta = log(pars[["beta"]]),
                                             log_k = log(pars[["k"]])),
-                          hessian = TRUE, DLL = "weibull_hawkes_cbf_F", silent = TRUE)
+                          hessian = TRUE, DLL = "whale_cues", silent = TRUE)
     opt <- stats::optim(obj$par, obj$fn, obj$gr, control = list(trace = 0))
     obj$objective <- opt$value
 
@@ -65,5 +65,5 @@ for(j in 1:n_starts){
 }
 
 # Save Results
-write.csv(cbfCoefs,paste("PhD/Whales/cbfCoefs_",wh, ".csv", sep=""))
-write.csv(cbfNLLs,paste("PhD/Whales/cbfNLLs_",wh, ".csv", sep=""))
+write.csv(cbfCoefs,paste("Output/FreqCoefs_",wh, ".csv", sep=""))
+write.csv(cbfNLLs,paste("Output/FreqNLLs_",wh, ".csv", sep=""))
