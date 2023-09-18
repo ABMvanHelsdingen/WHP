@@ -1,7 +1,7 @@
 # Fitting the Model expressed in Equations 9 and 10
 # Fitted with TMB in a frequentist framework
 
-load("PhD-oversize/cleaned_whale_data.Rdata")
+load("cleaned_whale_data.Rdata")
 wh <- 53
 dyn.load(TMB::dynlib("whale_cues"))
 library(stelfi)
