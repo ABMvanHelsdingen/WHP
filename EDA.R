@@ -40,6 +40,74 @@ plotZ <- ggplot() +
   theme_classic() +
   theme(axis.title = element_text(size = 20))
 
+# FIGURE 2B
+plotN1 <- ggplot() +
+  geom_line(data=depths, aes(x=(1/3600)*ts,y=100*depths), linewidth=2) +
+  scale_y_reverse() +
+  ylab("") +
+  xlab("") +
+  xlim(5.4,6.2) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 27),
+        axis.text.y=element_text(size=15),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plotN2 <- ggplot() +
+  geom_point(data=cues, aes(x=(1/3600)*cues,y=100*depths),col="red",size=1.33) +
+  scale_y_reverse() +
+  ylab("Depth (m)") +
+  xlab("Time (hr)") +
+  xlim(5.4,6.2) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 27),
+        axis.text=element_text(size=15))
+
+gridExtra::grid.arrange(plotN1, plotN2, nrow=2)
+
+# FIGURE 2B
+# times as a point process with 1D band (depth) underneath
+
+# times
+plotB1 <- ggplot() +
+  #geom_point(data=cues, aes(x=(1/3600)*cues,y=1.5),col="red",shape="I") +
+  geom_segment(data=cues,aes(x=(1/3600)*cues,y=1.6,yend=1.4,xend=(1/3600)*cues),linewidth=0.01) +
+  geom_rect(data=depths, 
+            aes(xmin = (1/3600)*ts, xmax = (1/3600)*(ts+1),
+                ymin = 0, ymax = 1, fill = depths*100)) +
+  scale_fill_viridis_c() +
+  labs(fill="Depth (m)") +
+  xlab("Time (hr)") +
+  #xlim(5.4,6.2) +
+  #ylim(0,2) +
+  coord_cartesian(xlim=c(5.4,6.2),ylim=c(0,2)) +
+  #scale_x_continuous(limits=c(5.4,6.2)) +
+  theme_classic() +
+  theme(axis.title.x = element_text(size = 27),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size=15),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+# depth
+# use geom_rect
+plotB2 <- ggplot() +
+  geom_rect(data=depths, 
+            aes(xmin = (1/3600)*ts, xmax = (1/3600)*(ts+1),
+                ymin = 0, ymax = 1, fill = depths*100)) +
+  scale_fill_viridis_c() +
+  ylab("") +
+  xlab("") +
+  xlim(5.4,6.2) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 27),
+        axis.text.y=element_text(size=15),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+gridExtra::grid.arrange(plotB1, plotB2, nrow=2)
+
 # FIGURE 4: IWP and Homogenous Poisson comparison
 times = UWOgata(1, 0, 1, 1, 10000) # homogeneous Poisson process
 diffs = times[2:length(times)] - times[1:(length(times)-1)]

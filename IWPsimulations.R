@@ -10,12 +10,13 @@ source("Ogata.R")
 dyn.load(TMB::dynlib("weibull_hawkes"))
 reps <- 100
 runs <- 20
-pars = expand.grid(mu = c(1), beta = c(1),
-                   abratio = c(0.25, 0.75), k = c(0.5, 1, 2), times=c(100,1000,10000))
+pars = expand.grid(mu = c(1), beta = c(0.01, 0.1),
+                   abratio = c(0.25, 0.75), k = c(0.5, (2/3), 1.5, 2), times=c(400,1000,2500,6250))
 
-output <- matrix(0, nrow = reps, ncol = 8)
+output <- matrix(0, nrow = reps, ncol = 9)
 output[,1] <- pars$mu[i]; output[,2] <- pars$beta[i]
 output[,3] <- pars$abratio[i]; output[,4] <- pars$k[i]
+output[,9] <- pars$times[i]
 
 for(rep in 1:reps){
   times = UWOgata(pars$mu[i], pars$abratio[i]*pars$beta[i], pars$beta[i], pars$k[i], pars$times[i])
@@ -50,5 +51,5 @@ for(rep in 1:reps){
   }
 }
 
-write.csv(output, paste("Output/IWPsims_",i,"_.csv",sep=""))
+write.csv(output, paste("Output/IWPsims_2_",i,"_.csv",sep=""))
 
