@@ -270,6 +270,68 @@ show_mu <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(dept
   gridExtra::grid.arrange(line, line2, line3, nrow = 3)
 }
 
+show_fig4 <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(depths)) {
+  p <- seq(0, incr * (nrow(X) - 1), length.out = n)
+  idx <- ceiling(p / incr); idx[1] = 1
+  baseline <- X %*% coefs
+  baseline <- baseline[idx]
+  lambda <- numeric(n)
+  for(i in 1:length(p)){
+    A <- exp(-beta * (p[i] - times))[times < p[i]]
+    if(length(A) == 0){
+      A <- 0
+    }
+    if (log){
+      lambda[i] = log(exp(baseline[i]) + alpha * sum(A))
+    } else {
+      lambda[i] = exp(baseline[i]) + alpha * sum(A)
+      baseline[i] = exp(baseline[i])
+    }
+  }
+  
+
+  baseline <- exp(baseline)
+  mmax <- max(baseline); mmin <- min(baseline)
+  lmax <- max(lambda); lmin <- min(baseline)
+  ylab <- expression(lambda)
+  
+  data <-  data.frame(xp = p, lambda = lambda, mu = baseline, depths = -100*depths[idx], rates = -100*X[idx,4])
+  data$xp <- data$xp/3600 # seconds to hours
+  
+  line0 <- ggplot2::ggplot(data = data,
+                          ggplot2::aes(x = .data$xp, y = .data$lambda)) +
+    ggplot2::xlab("Time (hr)") +
+    ggplot2::ylab(ylab) + 
+    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    ggplot2::ylim(c(lmin, lmax)) +
+    ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+  
+  line1 <- ggplot2::ggplot(data = data,
+                          ggplot2::aes(x = .data$xp, y = .data$mu)) +
+    ggplot2::xlab("Time (hr)") +
+    ggplot2::ylab(ylab) + 
+    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    ggplot2::ylim(c(lmin, lmax)) +
+    ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+  
+  line2 <- ggplot2::ggplot(data = data,
+                           ggplot2::aes(x = .data$xp, y = .data$depths)) +
+    ggplot2::xlab("Time (hr)") +
+    ggplot2::ylab("Depth (m)") + 
+    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    #ggplot2::ylim(c(lmin, lmax)) +
+    ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+  
+  line3 <- ggplot2::ggplot(data = data,
+                           ggplot2::aes(x = .data$xp, y = .data$rates)) +
+    ggplot2::xlab("Time (hr)") +
+    ggplot2::ylab("Rate of Descent (m/s)") + 
+    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    #ggplot2::ylim(c(lmin, lmax)) +
+    ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+  gridExtra::grid.arrange(line0, line1, line2, nrow = 3)
+}
+
 # START OF SCRIPT
 load("PhD-oversize/cleaned_whale_data.Rdata")
 i = 53
@@ -357,6 +419,10 @@ for(j in c(i)){
 
 jpeg(paste("PhD/Whales/",names(cleaned_data)[j],"_",j, "_mu.jpeg", sep=""), width = 2000, height = 2000, quality=100)
 zzz <- show_mu(alpha, beta, coefs2, X, depths, times, cleaned_data[[j]]$incr, n = 4000, log = FALSE)
+dev.off()
+
+jpeg(paste("PhD/Whales/",names(cleaned_data)[j],"_",j, "_lambda.jpeg", sep=""), width = 2000, height = 2000, quality=100)
+zzz <- show_fig4(alpha, beta, coefs2, X, depths, times, cleaned_data[[j]]$incr, n = 4000, log = FALSE)
 dev.off()
 
 # plot showing effect of underwater, depth and rate
