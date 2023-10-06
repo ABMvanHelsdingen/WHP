@@ -7,7 +7,7 @@ dyn.load(TMB::dynlib("whale_cues"))
 library(stelfi)
 
 
-n_starts <- 200
+n_starts <- 500
 cbfNLLs <- matrix(0, nrow = 1, ncol = n_starts)
 cbfCoefs <- matrix(0, nrow = n_starts, ncol = 21)
 

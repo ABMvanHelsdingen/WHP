@@ -1,4 +1,4 @@
-# Fitting the Model expressed in Equations 9 and 10
+# Fitting the Model expressed in Equations 4 and 8
 # Fitted with NIMBLE in a Bayesian framework
 
 
@@ -110,7 +110,7 @@ mcWHPF <- nimbleCode({
 })
 
 ## START OF SCRIPT
-load("PhD-oversize/cleaned_whale_data.Rdata")
+load("cleaned_whale_data.Rdata")
 wh <- 53
 
 times <- cleaned_data[[wh]]$times
@@ -144,5 +144,5 @@ mcmc.out <- nimbleMCMC(model = Hmodel,
                        summary = TRUE, WAIC = TRUE)
 
 # Save Results
-write.csv(mcmc.out$samples, paste("PhD/Whales/NIMBLE_Samples",wh,".csv", sep=""))
-write.csv(mcmc.out$summary, paste("PhD/Whales/NIMBLE_Coefs",wh,".csv", sep=""))
+write.csv(mcmc.out$samples, paste("Output/NIMBLE_Samples",wh,".csv", sep=""))
+write.csv(mcmc.out$summary, paste("Output/NIMBLE_Coefs",wh,".csv", sep=""))

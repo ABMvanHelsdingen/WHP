@@ -1,5 +1,5 @@
 # simulate IWP
-# perform simulations in parallel (6 sets of parameters, 3 time periods)
+# following block allows the script to be run in parallel on NeSI
 args <- commandArgs(trailingOnly = TRUE)
 i <- as.numeric(args[1])
 set.seed(4321 + 10*i)
@@ -51,5 +51,5 @@ for(rep in 1:reps){
   }
 }
 
-write.csv(output, paste("Output/IWPsims_2_",i,"_.csv",sep=""))
+write.csv(output, paste("Output/IWPsims_",i,"_.csv",sep=""))
 
