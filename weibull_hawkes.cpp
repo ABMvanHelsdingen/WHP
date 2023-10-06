@@ -2,7 +2,7 @@
 # include <math.h>
 # include <vector>
 # include <iostream>
-/* Experimental model, intensity is as Hawkes process but IATs are Weibull (with shape parameter k) */
+/* Intensity is as Hawkes process but IATs are Weibull (with shape parameter k) */
 template<class Type>
 Type objective_function<Type>::operator() () {
   using namespace Eigen;
@@ -43,28 +43,17 @@ Type objective_function<Type>::operator() () {
 
 
   Type nll = 0;
+  Type lgk = lgamma(1+(1/k)); // Avoid having to recompute
+  Type gk = exp(lgk);
+  
   nll -= sum(log(lambdas));
   nll -= N * log(k);
-  nll -= N * k * lgamma(1+(1/k));
+  nll -= N * k * lgk;
   nll -= (k - 1) * sum(log(diff_compensators));
   for(int i = 0; i < N; ++i){
-    nll += pow((diff_compensators[i] * exp(lgamma(1+(1/k)))),k);
+    nll += pow((diff_compensators[i] * gk),k);
   }
   
-
-  SIMULATE {
-    Type eps = 1e-10, t = 0, M = mu, U;
-    int index = 0;
-    while (index < times.size()){
-      M = mu + alpha * (-beta * (t + eps - times.array().head(index))).exp().sum();
-      t += rexp(Type(1.) / M); U = runif(Type(0.), M); // There is currently a bug as at TMB-1.7.20, 14/05/2021.
-      if (U <= mu + alpha * (-beta * (t - times.array().head(index))).exp().sum()){
-	times[index] = t;
-	index++;
-      }
-    }
-    REPORT(times);
-  }
 
   ADREPORT(mu);
   ADREPORT(alpha);
