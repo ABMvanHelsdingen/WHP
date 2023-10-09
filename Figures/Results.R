@@ -267,6 +267,7 @@ show_mu <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(dept
     ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
     #ggplot2::ylim(c(lmin, lmax)) +
     ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+  
   gridExtra::grid.arrange(line, line2, line3, nrow = 3)
 }
 
@@ -281,19 +282,16 @@ show_fig4 <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(de
     if(length(A) == 0){
       A <- 0
     }
-    if (log){
-      lambda[i] = log(exp(baseline[i]) + alpha * sum(A))
-    } else {
       lambda[i] = exp(baseline[i]) + alpha * sum(A)
       baseline[i] = exp(baseline[i])
     }
-  }
   
 
   baseline <- exp(baseline)
   mmax <- max(baseline); mmin <- min(baseline)
   lmax <- max(lambda); lmin <- min(baseline)
-  ylab <- expression(lambda)
+  ylab0 <- expression(lambda(t))
+  ylab1 <- expression(mu(t))
   
   data <-  data.frame(xp = p, lambda = lambda, mu = baseline, depths = -100*depths[idx], rates = -100*X[idx,4])
   data$xp <- data$xp/3600 # seconds to hours
@@ -301,7 +299,7 @@ show_fig4 <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(de
   line0 <- ggplot2::ggplot(data = data,
                           ggplot2::aes(x = .data$xp, y = .data$lambda)) +
     ggplot2::xlab("Time (hr)") +
-    ggplot2::ylab(ylab) + 
+    ggplot2::ylab(ylab0) + 
     ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
     ggplot2::ylim(c(lmin, lmax)) +
     ggplot2::theme(legend.position = "none", text = element_text(size = 25))
@@ -309,9 +307,9 @@ show_fig4 <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(de
   line1 <- ggplot2::ggplot(data = data,
                           ggplot2::aes(x = .data$xp, y = .data$mu)) +
     ggplot2::xlab("Time (hr)") +
-    ggplot2::ylab(ylab) + 
+    ggplot2::ylab(ylab1) + 
     ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
-    ggplot2::ylim(c(lmin, lmax)) +
+    ggplot2::ylim(c(mmin, mmax)) +
     ggplot2::theme(legend.position = "none", text = element_text(size = 25))
   
   line2 <- ggplot2::ggplot(data = data,
@@ -329,7 +327,9 @@ show_fig4 <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(de
     ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
     #ggplot2::ylim(c(lmin, lmax)) +
     ggplot2::theme(legend.position = "none", text = element_text(size = 25))
-  gridExtra::grid.arrange(line0, line1, line2, nrow = 3)
+  
+  image <- ggpubr::ggarrange(line0, line1, line2, nrow = 3)
+  return(image)
 }
 
 # START OF SCRIPT
@@ -351,12 +351,33 @@ for(j in 1:length(depths)){
     states[j] = 2 # ascent
   } # if depth < 20m, state = 0 (surface)
 }
+
+# create matrix to calculate mu(t)
+X = matrix(0, nrow = length(depths), ncol = 4)
+X[,3] = depths; X[,4] = rates;
+X[,1] = rep(1, length(depths))
+for(i in 1:length(depths)){
+  if (depths[i] > 0.2){
+    X[i, 2] = 1
+  }
+}
+
+# Import coefs
+Bayesian <- T
+NIMBLEcoefs <- read.csv("IWP/NIMBLE_Coefs53.csv")[,2]
+
+if (Bayesian){
+  coefs <- NIMBLEcoefs[2:5]
+  beta <- NIMBLEcoefs[6]; alpha <- NIMBLEcoefs[1] * NIMBLEcoefs[6]
+}
   
   
-# For each of frequentist and Bayesian
-# compensators, lambda/mu and mu/d/r plots
 
 
+# Create Figure 4
+
+image <- show_fig4(alpha,beta,coefs,X,depths,times,1/rincr)
+ggsave("fig4.jpeg", height = 15, width = 12)
   
   
 out <- tryCatch(
