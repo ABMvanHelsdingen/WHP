@@ -287,44 +287,45 @@ show_fig4 <-  function(alpha, beta, coefs, X, depths, times, incr, n = length(de
     }
   
 
-  baseline <- exp(baseline)
   mmax <- max(baseline); mmin <- min(baseline)
   lmax <- max(lambda); lmin <- min(baseline)
   ylab0 <- expression(lambda(t))
   ylab1 <- expression(mu(t))
   
   data <-  data.frame(xp = p, lambda = lambda, mu = baseline, depths = -100*depths[idx], rates = -100*X[idx,4])
-  data$xp <- data$xp/3600 # seconds to hours
+  #data$xp <- data$xp/3600 # seconds to hours
   
   line0 <- ggplot2::ggplot(data = data,
                           ggplot2::aes(x = .data$xp, y = .data$lambda)) +
-    ggplot2::xlab("Time (hr)") +
+    #ggplot2::xlab("Time (hr)") +
     ggplot2::ylab(ylab0) + 
-    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    ggplot2::geom_line(lwd = 2.25) +  ggplot2::theme_minimal() +
     ggplot2::ylim(c(lmin, lmax)) +
-    ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+    ggplot2::theme(legend.position = "none", text = element_text(size = 25),
+                   axis.title.x = element_blank())
   
   line1 <- ggplot2::ggplot(data = data,
                           ggplot2::aes(x = .data$xp, y = .data$mu)) +
-    ggplot2::xlab("Time (hr)") +
+    #ggplot2::xlab("Time (hr)") +
     ggplot2::ylab(ylab1) + 
-    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    ggplot2::geom_line(lwd = 2.25) +  ggplot2::theme_minimal() +
     ggplot2::ylim(c(mmin, mmax)) +
-    ggplot2::theme(legend.position = "none", text = element_text(size = 25))
+    ggplot2::theme(legend.position = "none", text = element_text(size = 25),
+                   axis.title.x = element_blank())
   
   line2 <- ggplot2::ggplot(data = data,
                            ggplot2::aes(x = .data$xp, y = .data$depths)) +
-    ggplot2::xlab("Time (hr)") +
+    ggplot2::xlab("Time (s)") +
     ggplot2::ylab("Depth (m)") + 
-    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    ggplot2::geom_line(lwd = 2.25) +  ggplot2::theme_minimal() +
     #ggplot2::ylim(c(lmin, lmax)) +
     ggplot2::theme(legend.position = "none", text = element_text(size = 25))
   
   line3 <- ggplot2::ggplot(data = data,
                            ggplot2::aes(x = .data$xp, y = .data$rates)) +
-    ggplot2::xlab("Time (hr)") +
+    #ggplot2::xlab("Time (hr)") +
     ggplot2::ylab("Rate of Descent (m/s)") + 
-    ggplot2::geom_line(lwd = 2.5) +  ggplot2::theme_minimal() +
+    ggplot2::geom_line(lwd = 2.25) +  ggplot2::theme_minimal() +
     #ggplot2::ylim(c(lmin, lmax)) +
     ggplot2::theme(legend.position = "none", text = element_text(size = 25))
   

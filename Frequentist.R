@@ -67,3 +67,44 @@ for(j in 1:n_starts){
 # Save Results
 write.csv(cbfCoefs,paste("Output/FreqCoefs_",wh, ".csv", sep=""))
 write.csv(cbfNLLs,paste("Output/FreqNLLs_",wh, ".csv", sep=""))
+
+# Run with k=1 (i.e. a Hawkes process)
+
+NLLmin <- Inf
+for(j in 1:n_starts){
+  out <- tryCatch(
+    {
+      rbeta <- rexp(1,1)
+      pars <- list(alpha = runif(1,0.01,0.99) * rbeta ,beta = rbeta, k = 1)
+      background_pars <- c(runif(1,-12,-6), runif(1,-2,0), runif(1,-1,1), runif(1,-7,-0.5))
+      cbfCoefs[j, 1:7] <- c(background_pars[1], background_pars[2], background_pars[3], background_pars[4],
+                            pars[[1]], pars[[2]], pars[[3]])
+      obj <- TMB::MakeADFun(data = list(times = times, marks = rep(1, length(times)), interval = 1/ rincr,
+                                        slots = slot_numbers, states = states, depths = depths, rates = rates),
+                            parameters = list(baseline = background_pars,
+                                              logit_abratio = qlogis(pars[["alpha"]]/pars[["beta"]]),
+                                              log_beta = log(pars[["beta"]]),
+                                              log_k = log(pars[["k"]])),
+                            map = list(log_k = as.factor(NA)),
+                            hessian = TRUE, DLL = "whale_cues", silent = TRUE)
+      opt <- stats::optim(obj$par, obj$fn, obj$gr, control = list(trace = 0))
+      obj$objective <- opt$value
+      
+      cbfNLLs[1, j] <- obj$objective
+      coefs <- stelfi::get_coefs(obj)
+      cbfCoefs[j, 8:14] <- coefs[,1] # MLEs
+      cbfCoefs[j, 15:21] <- coefs[,2] # MLE standard errors
+      
+      if ((obj$objective < NLLmin) && (obj$objective != 0)) {
+        NLLmin <- obj$objective
+      }
+    }, error = function(cond){
+      print(paste("Fitting error", wh, j))
+      print(cond)
+    }
+  )
+}
+
+# Save Results
+write.csv(cbfCoefs,paste("Output/FreqCoefs_",wh, ".csv", sep=""))
+write.csv(cbfNLLs,paste("Output/FreqNLLs_",wh, ".csv", sep=""))
