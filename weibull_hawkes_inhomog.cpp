@@ -2,10 +2,9 @@
 # include <math.h>
 # include <vector>
 # include <iostream>
-/* baseline intensity is mu + B*s(t) + C*sin(t) */
-/* where B, C >= 0, B < mu */
-/* s(t) alternates between 0 and 1 every pi time units, so that s(t) = when 0<t<pi */
-/* and s(t) = 1 when pi<t<(2*pi) etc */
+/* baseline intensity is mu + B*states(t) + C*covs(t) */
+/* where mu,B >= 0, C < mu */
+/* states is binary and abs(covs) <= 1 */
 template<class Type>
 Type objective_function<Type>::operator() () {
   using namespace Eigen;
@@ -18,7 +17,7 @@ Type objective_function<Type>::operator() () {
   Type marks_mean = marks.sum()/marks.size(); // Average mark
   // parameters of the Hawkes process
   //PARAMETER(log_mu);
-  PARAMETER_VECTOR(baseline); // log mu, log B and logit(C/mu)
+  PARAMETER_VECTOR(baseline); // log mu, log B, logit(C/mu)
   PARAMETER(logit_abratio);
   PARAMETER(log_beta);
   PARAMETER(log_k);
@@ -29,7 +28,7 @@ Type objective_function<Type>::operator() () {
   
   Type mu = exp(baseline[0]);
   Type B = exp(baseline[1]);
-  Type C = exp(baseline[2]) / (Type(1.) + exp(baseline[2])) * mu;
+  Type C = (exp(baseline[2]) * mu) / (Type(1.) + exp(baseline[2]));
   
   int N = times.size();
   int n_slots = covs.size();
@@ -37,7 +36,7 @@ Type objective_function<Type>::operator() () {
   vector<Type> baselines = vector<Type>::Zero(n_slots);
   for(int j = 0; j< n_slots; ++j){
     if (states[j] > 0){
-      baselines[j] = mu + B + (C *covs[j]);
+      baselines[j] = mu + B + (C * covs[j]);
     } else {
       baselines[j] = mu + (C * covs[j]);
     }

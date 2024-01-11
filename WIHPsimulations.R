@@ -1,5 +1,5 @@
 # simulate WHP with inhomogenous baseline rate
-# Baseline rate is mu + B * s(t) + C * sin(t)
+# Baseline rate is mu + B * s(t) - C * sin(t/P)
 # where B, C are non-negative and mu > C
 # and s(t) is 1 when pi<t<2*pi, 3*pi<t<4*pi, 5*pi<t<6*pi etc
 
@@ -11,46 +11,62 @@ set.seed(4321 + 10*i)
 # Integral of baseline
 
 Mu <- function(t, pars){
-  B <- pars[["B"]]
-  C <- pars[["C"]]
-  mu <- pars[["mu"]]
+  B <- pars[["B"]] # size of jumps
+  C <- pars[["C"]] # size of sinousodial waves
+  mu <- pars[["mu"]] # constant
+  P <- pars[["P"]] # period of jumps/waves
   
-  x <- floor(t/pi)
-  y <- floor(t/(2*pi))
+  x <- floor(t/(P*pi))
+  y <- floor(t/(2*P*pi))
   
-  return(mu*t + pi*B*y + B*(x - 2*y)*(t - pi*x) + C*(1 - cos(t)))
-
-  
+  return(mu*t + pi*B*P*y + B*(x - 2*y)*(t - pi*P*x) - P*C*(1 - cos(t/P)))
             
+}
+
+mu <- function(t, pars){
+  B <- pars[["B"]] # size of jumps
+  C <- pars[["C"]] # size of sinusoidal waves
+  mu <- pars[["mu"]] # constant
+  P <- pars[["P"]] # period of jumps/waves
+  
+  x <- floor(t/(P*pi))
+  y <- floor(t/(2*P*pi))
+  
+  if (x == 2*y){
+    return(mu - C*sin(t/P))
+  } else {
+    return(mu + B - C*sin(t/P))
+  }
+  
 }
 
 
 library(stelfi)
 source("Ogata.R")
 dyn.load(TMB::dynlib("weibull_hawkes_inhomog"))
-reps <- 100
+reps <- 10
 runs <- 20
-pars = expand.grid(mu = c(1), B = c(1), C = c(0.5), beta = c(0.01, 0.1),
+pars = expand.grid(mu = c(0.5), B = c(1), C = c(0.25), P = c(10), beta = c(0.01, 0.1),
                    abratio = c(0.25, 0.75), k = c(0.5, (2/3), 1.5, 2), times=c(400,1000,2500,6250))
 
-output <- matrix(0, nrow = reps, ncol = 13)
-output[,1] <- pars$mu[i]; output[,2] <- pars$A[i]
-output[,3] <- pars$B[i]; output[,4] <- pars$beta[i]
-output[,5] <- pars$abratio[i]; output[,6] <- pars$k[i]
-output[,13] <- pars$times[i]
+output <- matrix(0, nrow = reps, ncol = 15)
+output[,1] <- pars$mu[i]; output[,2] <- pars$B[i]
+output[,3] <- pars$C[i]; output[,4] <- pars$P[i]
+output[,5] <- pars$beta[i]; output[,6] <- pars$abratio[i]; output[,7] <- pars$k[i]
+output[,15] <- pars$times[i]
 
-mu_max <- pars$mu[i] + pars$B[i] + pars$C[i]
-mu_min <- pars$mu[i] - pars$C[i]
-baseline_pars <- list(B = pars$B[i], C = pars$C[i], mu = pars$mu[i])
+mu_max <- pars$mu[i] + pars$B[i] + abs(pars$C[i])
+mu_min <- pars$mu[i] - abs(pars$C[i])
+baseline_pars <- list(B = pars$B[i], C = pars$C[i], mu = pars$mu[i], P = pars$P[i])
 
 incr <- 0.1
 ts <- seq(incr, pars$times[i], by = incr)
-covs <- sin(ts)
+covs <- -1*sin(ts/pars$P[i])
 states <- rep(0, length = length(ts))
 
 for(ind in 1:length(ts)){
-  x <- floor(ts[ind]/pi)
-  y <- floor(ts[ind]/(2*pi))
+  x <- floor(ts[ind]/(pars$P[i]*pi))
+  y <- floor(ts[ind]/(2*pars$P[i]*pi))
   
   if (x > (2*y)){
     states[ind] = 1
@@ -87,8 +103,9 @@ for(rep in 1:reps){
         NLLmin <- obj$objective
       }
       
-      output[rep, 5] <- z[1,1]; output[rep, 6] <- z[3,1]
-      output[rep, 7] <- z[2,1]/z[3,1]; output[rep, 8] <- z[4,1]
+      output[rep, 8:10] <- z[1:3,1]; output[rep, 11] <- pars$P[i]
+      output[rep, 13] <- z[4,1]/z[5,1]; output[rep, 12] <- z[5,1]
+      output[rep, 14] <- z[6,1]
       }, error = function(cond){
         print(cond)
       }
@@ -98,3 +115,13 @@ for(rep in 1:reps){
 
 write.csv(output, paste("Output/WIHPsims_",i,"_.csv",sep=""))
 
+
+#mus <- numeric(length(times))
+#for(ind in 1:length(times)){
+  #mus[ind] <- mu(times[ind], baseline_pars)
+#}
+
+#muts <-numeric(length(ts))
+#for(ind in 1:length(ts)){
+  #muts[ind] <- mu(ts[ind], baseline_pars)
+#}

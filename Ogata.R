@@ -148,18 +148,19 @@ simWHP <- function(mu, alpha, beta, k, t, tol = 1.e-8){
   
 }
 
-WIHPsolve <- function(min, max, x, Mu,A,alpha,beta, pars, iter = 10){
+WIHPsolve <- function(min, max, x, t0, Mu,A,alpha,beta, pars, iter = 10){
   
   minbound <- min
   maxbound <- max
   newt <- mean(c(minbound,maxbound))
+  Mu_t0 <- Mu(t0, pars) # integral at the previous event
   #print(minbound); print(maxbound); print(newt)
   #print(pars)
   
   for(i in 1:iter){
-    integral <- Mu(newt, pars) + (alpha*A/beta)*(1 - exp(-beta*newt))
+    integral <- Mu(newt + t0, pars) + (alpha*A/beta)*(1 - exp(-beta*newt))
     #print(integral); print(x)
-    if (integral > x){
+    if (integral - Mu_t0 > x){
       maxbound <- newt
     } else {
       minbound <- newt
@@ -182,7 +183,7 @@ simWIHP <- function(Mu, mu_max, mu_min, alpha, beta, pars, k, t, tol = 1.e-8){
   minbound <- w/(mu_max +(alpha*(Ai+1)))
   maxbound <- w/(mu_min)
   iter <- ceiling((log(maxbound-minbound) - log(tol))/log(2))
-  y <- WIHPsolve(minbound, maxbound, w, Mu, Ai+1, alpha, beta, pars, iter = iter)
+  y <- WIHPsolve(minbound, maxbound, w, 0, Mu, 0, alpha, beta, pars, iter = iter)
   
   times <- c(mean(y$min,y$max))
   n <- 1
@@ -193,10 +194,11 @@ simWIHP <- function(Mu, mu_max, mu_min, alpha, beta, pars, k, t, tol = 1.e-8){
     minbound <- w/(mu_max +(alpha*(Ai+1)))
     maxbound <- w/(mu_min)
     iter <- ceiling((log(maxbound-minbound) - log(tol))/log(2))
-    y <- WIHPsolve(minbound, maxbound, w, Mu, Ai+1, alpha, beta, pars, iter)
+    y <- WIHPsolve(minbound, maxbound, w, times[n], Mu, Ai+1, alpha, beta, pars, iter)
     
     times <- append(times, times[n] + mean(c(y$min,y$max)))
     errors <- append(errors, (y$max-y$min))
+    #print(errors)
     n <- n + 1
     Ai <- (Ai + 1) * exp(-1*beta*(times[n] - times[(n-1)]))
     
