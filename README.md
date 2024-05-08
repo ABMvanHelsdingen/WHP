@@ -1,5 +1,7 @@
 # WHP
 
+Supplement to "An Inhomogeneous Weibull–Hawkes Process to Model Underdispersed Acoustic Cues" (van Helsdingen et al, 2024*)
+
 ## Cues
  
 Contains files relating to the fitting of the whale cue data and the results. 
